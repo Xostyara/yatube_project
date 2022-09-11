@@ -24,20 +24,32 @@ SECRET_KEY = 'kwo-n_0g2nn4(#c*uj&)=^x@3$py17$#c*an3a*@!jv=*f1!+q'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# Указание настроек для работы программного клиента (для тестирования)
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'testserver',
+]
 
-ALLOWED_HOSTS = []
-
-
+LOGIN_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'posts:index'
+# LOGOUT_REDIRECT_URL = 'posts:index'
 # Application definition
 
 INSTALLED_APPS = [
-    'posts.apps.PostsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'posts.apps.PostsConfig',
+    'users.apps.UsersConfig',
+    'core.apps.CoreConfig',
+    'about.apps.AboutConfig',
+    'sorl.thumbnail',
+    # 'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +61,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+POSTS_PER_PAGE = 10
 ROOT_URLCONF = 'yatube.urls'
 # Путь к директории с шаблонами вынесен в переменную:
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
@@ -64,6 +76,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Добавлен контекст-процессор
+                'core.context_processors.year.year',
             ],
         },
     },
@@ -105,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -118,5 +132,22 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
-
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Подключаем движок filebased.EmailBackend -
+# эмуляция почтового сервера, сохраняет текст отправленных
+# электронных писем в отдельную директорию
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# указываем директорию, в которую складываются файлы писем
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+} 

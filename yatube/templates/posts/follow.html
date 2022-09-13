@@ -1,8 +1,10 @@
-{% extends "base.html" %}
-{% block title %}Последние обновления на сайте{% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
+{% extends 'base.html' %}
+{% load cache %}
+{% load thumbnail %}
+{% block title %} Подписки {% endblock %}
 {% block content %}
-  {% include 'posts/includes/switcher.html' %}
+<div class="container py-5">
+  {% include 'posts/includes/switcher.html' with follow=True %}
   {% for post in page_obj %}
   <div class="container py-3">
     <article>
@@ -12,7 +14,11 @@
       {% endif %}
     </article>
   </div>
-    {% if not forloop.last %}<hr>{% endif %}
-  {% endfor %}
+</div>
+{% if not forloop.last %}
+<hr>{% endif %}
+{% endfor %}
+<div class="d-flex justify-content-center">
   {% include 'posts/includes/paginator.html' %}
+</div>
 {% endblock %}

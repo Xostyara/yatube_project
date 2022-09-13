@@ -1,5 +1,6 @@
+
 from django.shortcuts import render, get_object_or_404
-from .models import Post, Group, User
+from .models import Post, Group, User, Comment, Follow
 from django.shortcuts import render, redirect
 from .forms import PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
@@ -60,8 +61,13 @@ def profile(request, username):
 
     user_posts = user_author.posts.all()
     page_obj = paginate_page(request, user_posts)
+    following = request.user.is_authenticated and Follow.objects.filter(
+        user=request.user,
+        author=user_author
+    )
     context = {
         'page_obj': page_obj,
+        'following': following,
         'user_author': user_author,
     }
     return render(request, template, context)
@@ -71,9 +77,18 @@ def profile(request, username):
 def post_detail(request, post_id):
 
     template = 'posts/post_detail.html'
-    post = get_object_or_404(Post, id=post_id)
+    post = get_object_or_404(
+        Post.objects.select_related(
+            'author',
+            'group'
+        ), 
+        pk=post_id)
+    form = CommentForm(request.POST or None)
+    comments = Comment.objects.filter(post=post)
     context = {
+        'comments':comments,
         'post': post,
+        'form': form,
     }
     return render(request, template, context)
 
@@ -145,4 +160,38 @@ def add_comment(request, post_id):
         comment.author = request.user
         comment.post = post
         comment.save()
-    return redirect('posts:post_detail', post_id=post_id) 
+    return redirect('posts:post_detail', post_id=post_id)
+
+@login_required
+def follow_index(request):
+    """получаем посты в которых author связан через модель Follows
+    текущим пользователем через request идем в Post, от туда через filter
+     в author, далее через select_related (following) в Follow, далее user.
+     Находим пользователя с заданным именем - для него ищем обьекты в
+     таблицы Follow которые на него ссылаются далее для всех найденых з
+     аписей в Follow ищутся связанные с ним авторы,
+     а далее все посты которые связаны с автором"""
+    posts_lists = Post.objects.filter(author__following__user=request.user)
+    context = {'page_obj': paginate_page(request, posts_lists)}
+    return render(request, 'posts/follow.html', context)
+
+
+@login_required
+def profile_follow(request, username):
+    """Получаем всех автров"""
+    author = get_object_or_404(User, username=username)
+    if author != request.user:
+        Follow.objects.get_or_create(user=request.user, author=author)
+    return redirect('posts:profile', author)
+
+
+@login_required
+def profile_unfollow(request, username):
+    """Получаем всех подписанных юзеров и отписываем их"""
+    user_follower = get_object_or_404(
+        Follow,
+        user=request.user,
+        author__username=username
+    )
+    user_follower.delete()
+    return redirect('posts:profile', username)

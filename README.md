@@ -20,7 +20,11 @@ pip install -r requirements.txt
 
 дополнительно необходимо обновить pytest!
 pip install pytest==6.2.5
-``` 
+```
+Для работы с картинками 
+pip install pillow 
+pip install sorl-thumbnail
+
 инструмент для проверки покрытия тестами
 pip3 install coverage 
 - В папке с файлом manage.py выполните команду:
